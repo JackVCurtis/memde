@@ -13,6 +13,7 @@ function App() {
 
     if (!subscribed) {
       ipfs.pubsub.subscribe(channel, (msg) => {
+        console.log('subscription fired')
         const msgText =  new TextDecoder().decode(msg.data)
         if (messages.length >= 20) {
           setMessages(messages.slice(1).concat([msgText]))
@@ -26,7 +27,7 @@ function App() {
 
 
     return () => ipfs.pubsub.unsubscribe(channel, () => {})
-  }, [ipfs, messages, setMessages])
+  }, [ipfs, messages, setMessages, subscribed, setSubscribed])
 
   const sendMessage = async (e) => {
     e.preventDefault()
