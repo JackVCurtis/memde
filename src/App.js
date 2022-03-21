@@ -5,20 +5,27 @@ import './App.css';
 function App() {
   const { ipfs, isIpfsReady, ipfsInitError } = useIpfsFactory({ commands: ['id'] })
   const [messages, setMessages] = useState([])
+  const [subscribed, setSubscribed] = useState(false)
   const [newMessage, setNewMessage] = useState('')
   const channel = 'a-random-channel-name-1803764rh'
   useEffect(() => {
     if (!ipfs) return
-    ipfs.pubsub.subscribe(channel, (msg) => {
-      const msgText =  new TextDecoder().decode(msg.data)
-      if (messages.length >= 20) {
-        setMessages(messages.slice(1).concat([msgText]))
-      } else {
-        setMessages(messages.concat([msgText]))
-      }
-    })
 
-    return ipfs.pubsub.unsubscribe(channel, () => {})
+    if (!subscribed) {
+      ipfs.pubsub.subscribe(channel, (msg) => {
+        const msgText =  new TextDecoder().decode(msg.data)
+        if (messages.length >= 20) {
+          setMessages(messages.slice(1).concat([msgText]))
+        } else {
+          setMessages(messages.concat([msgText]))
+        }
+      }).then(() => {
+        setSubscribed(true)
+      })
+    }
+
+
+    return () => ipfs.pubsub.unsubscribe(channel, () => {})
   }, [ipfs, messages, setMessages])
 
   const sendMessage = async (e) => {
@@ -33,7 +40,7 @@ function App() {
   return (
     <div>
       {
-        isIpfsReady && <form onSubmit={sendMessage}>
+        isIpfsReady && subscribed && <form onSubmit={sendMessage}>
         <input type='text' onChange={(e) => setNewMessage(e.target.value)} value={newMessage}></input>
         <button type='submit'>Send</button>
       </form>
